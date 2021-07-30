@@ -1,7 +1,15 @@
 <html>
 <head>
   <title>Minesweeper Game!</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <p> Currently, We got nothing. Check back later! </p>
+  <p>Generated Mine array: </p>
+  <div id="array">Press the button to generate!</div>
+  <button onclick="generateGridFromInput()">NEW GAME</button><br>
+  Columns: <input id="cols" type="number" value="10"><br>
+  Rows: <input id="rows" type="number" value="10"><br>
+  Mines: <input id="mines" type="number" value="10"><br>
+  
+  <script src="script.js"></script>
 </html>

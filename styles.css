@@ -1,0 +1,54 @@
+html {
+    overflow-x: scroll;
+    width: auto;
+    white-space: nowrap;
+}
+
+.mine-row {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+p, .tile {
+    font-family: monospace; 
+    font-size: 21px; 
+    font-style: normal; 
+    font-variant: normal;
+}
+
+.tile {
+    width: 30px;
+    height: 30px;
+    border: 1px solid black;
+    border-radius: 0%;
+    text-align: center;
+}
+
+.covered {
+    background-color: #CCC;
+    color: #CCC;
+}
+.covered:hover {
+    background-color: #cc8888;
+    color: #cc8888;
+}
+
+.uncovered {
+    background-color: white;
+    color: #000;
+}
+.no-mines {
+    color: white;
+}
+
+.flagged {
+    color: limegreen;
+    background-color: limegreen;
+}
+.flagged:hover {
+    color: limegreen;
+    background-color: limegreen;
+}
