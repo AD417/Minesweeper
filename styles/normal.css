@@ -1,11 +1,18 @@
+:root {
+    --tilesWidth: 30;
+}
+
+
+
 html {
-    overflow-x: scroll;
-    width: auto;
+    overflow-x: auto;
+    width: 100%;
     white-space: nowrap;
 }
 
 .mine-row {
-    width: 100%;
+    width: var(--tilesWidth);
+    min-width: 100%;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -21,6 +28,7 @@ p, .tile {
 
 .tile {
     width: 30px;
+    min-width: 30px;
     height: 30px;
     border: 1px solid black;
     border-radius: 0%;
@@ -45,10 +53,15 @@ p, .tile {
 }
 
 .flagged {
-    color: limegreen;
-    background-color: limegreen;
+    color: #3C3;
+    background-color: #3C3;
 }
 .flagged:hover {
-    color: limegreen;
-    background-color: limegreen;
+    color: #3C3;
+    background-color: #3C3;
+}
+
+.mine {
+    color: white;
+    background-color: #C33;
 }
