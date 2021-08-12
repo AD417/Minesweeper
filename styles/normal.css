@@ -35,6 +35,11 @@ p, .tile {
     text-align: center;
 }
 
+.mine {
+    color: white;
+    background-color: #C33;
+}
+
 .covered {
     background-color: #CCC;
     color: #CCC;
@@ -59,9 +64,4 @@ p, .tile {
 .flagged:hover {
     color: #3C3;
     background-color: #3C3;
-}
-
-.mine {
-    color: white;
-    background-color: #C33;
 }

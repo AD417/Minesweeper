@@ -1,4 +1,4 @@
-let mineGrid = []; // Initialize a list with nothing
+let mineGrid; 
 let gameHasEnded = false;
 let gridRows = 10;
 let gridCols = 10;
@@ -21,48 +21,107 @@ class MineArray {
         this.minesTotal = data.minesTotal;
 
         this.minesLeft = data.minesTotal; // The number of mines that have yet to be uncovered.
-        this.tilesLeft = this.rows * this.cols;
+        this.tilesLeft = this.rows * this.cols; // The number of tiles in the board. May be used for "mine-free tiles remaining".
+
+        this.tileData = [];
+
+        let minesToGenerate = data.minesTotal;
+        let tilesToGenerate = this.rows * this.cols;
+        let isMine = false;
+        for (let i = 0; i < data.rows; i++) {
+            this.tileData[i] = [];
+            for (let j = 0; j < data.cols; j++) {
+                isMine = (Math.random() < minesToGenerate / tilesToGenerate);
+                this.tileData[i][j] = new Tile({ // Generates a tile at a specific cordinate that may or may not have a mine. 
+                    x: i,
+                    y: j,
+                    isMine: isMine,
+                })
+                tilesToGenerate--;
+                if (isMine) minesToGenerate--;
+            }
+        }
     }
     
-    get isMine(x,y) { // Tell me if a tile contains a mine. 
-        return (x >= 0 && y >= 0 && x < this.rows && y < this.cols && this[x][y].isMine);
+    isMine(x, y) { // Tell if a tile contains a mine. 
+        return (x >= 0 &&  // These prechecks make sure that the tile being tested is actually a tile. This prevents errors. 
+            y >= 0 && 
+            x < this.rows && 
+            y < this.cols && 
+            this.tileData[x][y].isMine
+        );
     }
 
-    get minesNear(x, y) {
-        let nearByMines = 0;
-        if (this.isMine(x+1, y+1)) nearbyMines++;
-        if (this.isMine(x+1, y  )) nearbyMines++;
-        if (this.isMine(x+1, y-1)) nearbyMines++;
-
-        if (this.isMine(x-1, y+1)) nearbyMines++;
-        if (this.isMine(x-1, y  )) nearbyMines++;
-        if (this.isMine(x-1, y-1)) nearbyMines++;
-
-        if (this.isMine(x  , y+1)) nearbyMines++;
-        if (this.isMine(x  , y-1)) nearbyMines++;
-
-        return nearByMines;
+    isFlagged(x, y) { // Tell if a tile is flagged.
+        return (x >= 0 && 
+            y >= 0 && 
+            x < this.rows && 
+            y < this.cols && 
+            this.tileData[x][y].isFlagged
+        );
     }
 
-    get displayHTML() { // Creates the tile that is rendered on the screen. 
-        let classes = "class=", click = "onclick=";
-        if (!gameHasEnded) {
-            if (this.isMine) {
-                classes += `"tile mine covered"`
-                click += `"endGame()"` //This thing is shit. FIX IT. 
-            } else {
-                classes += `"tile covered"`
-                click += `"uncoverTile(${this.x},${this.y})"`
-            }
-        } else {
+    minesNear(x, y) { // Tell all the mines near a specific tile. 
+        let xInt = parseInt(x);
+        let yInt = parseInt(y);
+        let nearbyMines = 0;
+        if (this.isMine(xInt+1, yInt+1)) nearbyMines++; // Love to know if there's a better way to do this. 
+        if (this.isMine(xInt+1, yInt  )) nearbyMines++;
+        if (this.isMine(xInt+1, yInt-1)) nearbyMines++;
 
+        if (this.isMine(xInt-1, yInt+1)) nearbyMines++;
+        if (this.isMine(xInt-1, yInt  )) nearbyMines++;
+        if (this.isMine(xInt-1, yInt-1)) nearbyMines++;
+
+        if (this.isMine(xInt  , yInt+1)) nearbyMines++;
+        if (this.isMine(xInt  , yInt-1)) nearbyMines++;
+
+        return nearbyMines;
+    }
+
+    flagsNear(x, y) {
+        let xInt = parseInt(x);
+        let yInt = parseInt(y);
+        let nearbyFlags = 0;
+        if (this.isFlagged(xInt+1, yInt+1)) nearbyFlags++;
+        if (this.isFlagged(xInt+1, yInt  )) nearbyFlags++;
+        if (this.isFlagged(xInt+1, yInt-1)) nearbyFlags++;
+
+        if (this.isFlagged(xInt-1, yInt+1)) nearbyFlags++;
+        if (this.isFlagged(xInt-1, yInt  )) nearbyFlags++;
+        if (this.isFlagged(xInt-1, yInt-1)) nearbyFlags++;
+
+        if (this.isFlagged(xInt  , yInt+1)) nearbyFlags++;
+        if (this.isFlagged(xInt  , yInt-1)) nearbyFlags++;
+
+        return nearbyFlags;
+    }
+
+    isFullyFlagged(x, y) {
+        return (this.flagsNear(x,y) === this.minesNear(x,y) && this.minesNear(x,y) !== 0);
+    }
+
+    HTMLForTile(x, y) {
+        if (gameHasEnded && this.isMine(x, y)) {
+            return `<div 
+            id="tile-${x}-${y}" 
+            class="tile uncovered">
+            X</div>`
+        }
+        if (this.isMine(x, y)) {
+            return `<div 
+            id="tile-${x}-${y}" 
+            class="tile covered"
+            onclick="endGame()"
+            oncontextmenu="flagTile(${x},${y})">X
+            </div>`
         }
         return `<div 
-            id="tile-${this.x}-${this.y}" 
-            class="tile covered" 
-            onclick="uncoverTile(${this.x},${this.y})"
-            oncontextmenu="flagTile(${this.x},${this.y})">
-            ${this.nearbyMines}</div>`;
+        id="tile-${x}-${y}" 
+        class="tile covered"
+        onclick="uncoverTile(${x},${y})"
+        oncontextmenu="flagTile(${x},${y})">
+        ${this.minesNear(x,y)   }</div>`
     }
 }
 
@@ -73,79 +132,42 @@ class MineArray {
 function generateGridFromInput() {// Takes the input data and creates a milefield. 
     try {
     generateGrid(
-        document.getElementById("rows").value,
         document.getElementById("cols").value,
+        document.getElementById("rows").value,
         document.getElementById("mines").value,
     );
     } catch (e) {
+        console.log(e)
         alert(e.message);
     }
 }
 
 function generateGrid(cols, rows, mines) { // Function that generates a 2D minesweeper board given rows, columns, and mines. 
-    // Declaring stuff
-    mineGrid = [];
-    gridRows = rows;
-    gridCols = cols;
-    unflaggedMines = 10;
-    let tilesLeft = rows * cols; // A value used for telling how many mines are left, and where to put those mines.
-    let minesLeft = mines;
-
-    if (minesLeft > tilesLeft) {
+    gameHasEnded = false
+    if (mines > cols * rows) {
         alert("Error: you are trying to generate a minefield with more mines than the field can contain.");
         return;
     }
+    mineGrid = new MineArray({
+        rows: rows,
+        cols: cols,
+        minesTotal: mines,
+    })
 
-    // Part 1: geneating the grid itself. 
-    for (let i = 0; i < rows; i++) {
-        let gridRow = []; // creates a list that will be one row of the grid. 
-        for (let j = 0; j < cols; j++) {
-            if (minesLeft / tilesLeft > Math.random()) {
-                gridRow[j] = "X"; // X = mine. If the game randomly selects this tile to have a mine, then give it one. 
-                minesLeft--;
-            } else {
-                gridRow[j] = 0; // Else, give it the integer value 0 so it can calculate how many mines border it. 
-            }
-            tilesLeft--;
-        }
-        mineGrid[i] = gridRow; // Puts the row that was just generated into the mineGrid. 
-    }
-    
-    // Part 2: iterating through the grid to get mine counts. 
-    for (let i = 0; i < rows; i++) {
-        for (let j = 0; j < cols; j++) {
-            if (mineGrid[i][j] === "X") continue; // Ignore tiles that have mines
-            if (i + 1 < rows) { // Try not to get a "element is undefined" error for edge of board. 
-                if (mineGrid[i + 1][j + 1] === "X") mineGrid[i][j]++;
-                if (mineGrid[i + 1][j    ] === "X") mineGrid[i][j]++;
-                if (mineGrid[i + 1][j - 1] === "X") mineGrid[i][j]++;
-            }
-            if (i > 0) {
-                if (mineGrid[i - 1][j + 1] === "X") mineGrid[i][j]++;
-                if (mineGrid[i - 1][j    ] === "X") mineGrid[i][j]++;
-                if (mineGrid[i - 1][j - 1] === "X") mineGrid[i][j]++;
-            }
-            if (mineGrid[i][j + 1] === "X") mineGrid[i][j]++;
-            if (mineGrid[i][j - 1] === "X") mineGrid[i][j]++;
-        }
-    } 
+
+
     displayGrid(mineGrid);
-    gameHasEnded = false
 }
 
 function displayGrid(matrix) {
+    document.getElementById("array").innerHTML = "";
     let string = "";
-    let vars = document.querySelector(':root')
-    vars.style.setProperty("--tilesWidth", 30 * matrix.length)
-    for (let i in matrix) {
+    //let vars = document.querySelector(':root')
+    //vars.style.setProperty("--tilesWidth", 30 * matrix.length)
+    for (let i in matrix.tileData) {
         string += `<div id="row-${i}" class="mine-row">`
-        for (let j in matrix[i]) {
-            string += `<div 
-                id="tile-${i}-${j}" 
-                class="tile covered" 
-                onclick="uncoverTile(${i},${j})"
-                oncontextmenu="flagTile(${i},${j})">
-                ${matrix[i][j]}</div>`;
+        for (let j in matrix.tileData[i]) {
+            string += matrix.HTMLForTile(i,j)
         }
         string += "</div>";
     }
@@ -156,45 +178,78 @@ function displayGrid(matrix) {
 }
 
 function uncoverTile(x, y, auto = false) { // Uncovers a tile.
-    if (gameHasEnded) return false;
-    let tile = document.getElementById(`tile-${x}-${y}`).classList;
-    let tileData = getTileData(x,y)
+    if (gameHasEnded || x >= mineGrid.rows || x < 0 || y >= mineGrid.cols || y < 0) return false;
 
-    if (tile.contains("uncovered") || tile.contains("flagged")) return false;
+    let tileData = mineGrid.tileData[x][y];
+    if (tileData.isFlagged) return false;
+
+    if (tileData.uncovered) {
+        if (!auto && mineGrid.isFullyFlagged(x,y)) {
+            uncoverTile(x+1, y+1, true);
+            uncoverTile(x+1, y  , true);
+            uncoverTile(x+1, y-1, true);
+            
+            uncoverTile(x-1, y+1, true);
+            uncoverTile(x-1, y  , true);
+            uncoverTile(x-1, y-1, true);
+            
+            uncoverTile(x, y+1, true);
+            uncoverTile(x, y-1, true);
+
+        } else return false;
+    }
+
+    if (tileData.isMine) {
+        endGame();
+        return false;
+    }
+    tileData.uncovered = true;
+
+    
+    let tile = document.getElementById(`tile-${x}-${y}`).classList;
     tile.add("uncovered");
     tile.remove("covered");
 
-    if (tileData === 0) {
+    if (mineGrid.minesNear(x, y) === 0) {
         tile.add("no-mines");
-        if (x + 1 < gridRows) { // Try not to get a "element is undefined" error for edge of board. 
-            if (mineGrid[x + 1][y + 1] !== undefined) uncoverTile(x+1, y+1, true);
-            if (mineGrid[x + 1][y    ] !== undefined) uncoverTile(x+1, y  , true);
-            if (mineGrid[x + 1][y - 1] !== undefined) uncoverTile(x+1, y-1, true);
-        }
-        if (x > 0) { 
-            if (mineGrid[x - 1][y + 1] !== undefined) uncoverTile(x-1, y+1, true);
-            if (mineGrid[x - 1][y    ] !== undefined) uncoverTile(x-1, y  , true);
-            if (mineGrid[x - 1][y - 1] !== undefined) uncoverTile(x-1, y-1, true);
-        }
-        if (mineGrid[x][y + 1] !== undefined) uncoverTile(x, y+1, true);
-        if (mineGrid[x][y - 1] !== undefined) uncoverTile(x, y-1, true);
+
+        uncoverTile(x+1, y+1, true);
+        uncoverTile(x+1, y  , true);
+        uncoverTile(x+1, y-1, true);
+        
+        uncoverTile(x-1, y+1, true);
+        uncoverTile(x-1, y  , true);
+        uncoverTile(x-1, y-1, true);
+        
+        uncoverTile(x, y+1, true);
+        uncoverTile(x, y-1, true);
 
     }
-    if (tileData === "X") onMineClicked();
+    return false;
 }
 
-function flagTile(x,y) {
-    if (gameHasEnded) return false;
-    let tile = document.getElementById(`tile-${x}-${y}`).classList;
-    if (tile.contains("uncovered")) return false;
+function flagTile(x,y) { // Flags or unflags a tile. 
+    if (gameHasEnded) return false; // Game over.
 
-    if (tile.contains("flagged")) tile.remove("flagged");
-    else tile.add("flagged");
+    let tileData = mineGrid.tileData[x][y];
+    if (tileData.uncovered) return false; // Can't flag an uncovered tile.
+
+    let tileEl = document.getElementById(`tile-${x}-${y}`);
+
+    if (tileData.isFlagged) {
+        tileEl.classList.remove("flagged");
+        tileEl.innerHTML = mineGrid.minesNear(x,y);
+        tileData.isFlagged = false;
+    } else {
+        tileEl.classList.add("flagged");
+        tileEl.innerHTML = "&#128681"; // 🚩 <-- Goal
+        tileData.isFlagged = true;
+    }
     return false;
 }
 
 function getTileData(x, y) {
-    return mineGrid[x][y];
+    return mineGrid.tileData[x][y]; // Depreciated. 
 }
 
 
@@ -205,13 +260,16 @@ function RandBetween(min, max, isInt = true) { // A function that creates a rand
     return number;
 }
 
-function onMineClicked() {
+function endGame() {
     gameHasEnded = true;
     let element;
-    for (i in mineGrid) {
-        for (j in mineGrid[i]) {
-            element = document.getElementById(`tile-${i}-${j}`).classList
-            if (mineGrid[i][j] === "X" && !element.contains("flagged")) element.add("mine");
+    for (i in mineGrid.tileData) {
+        for (j in mineGrid.tileData[i]) {
+            if (!mineGrid.tileData[i][j].isMine) continue;
+            element = document.getElementById(`tile-${i}-${j}`);
+            if (!mineGrid.tileData[i][j].isFlagged) element.classList.add("mine");
+            element.classList.remove("covered");
+            element.innerHTML = "&#128163;"; // 💣 <-- Goal
         }
     }
 }
