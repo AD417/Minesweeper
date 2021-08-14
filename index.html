@@ -4,12 +4,16 @@
   <link rel="stylesheet" href="styles/darkmode.css">
 </head>
 <body>
-  <p>Generated Mine array: </p>
+  <div class="headerContainer">
+    <p class="headerData">Mines Remaining: <span id="minesRemaining">0</span></p>
+  </div>
+  <br>
+  <br>
   <div id="array">Press the button to generate!</div>
   <button onclick="generateGridFromInput()">NEW GAME</button><br>
-  Rows: <input id="rows" type="number" value="10"><br>
-  Columns: <input id="cols" type="number" value="10"><br>
-  Mines: <input id="mines" type="number" value="10"><br>
+  Rows: <input id="rows" type="number" value="100"><br>
+  Columns: <input id="cols" type="number" value="100"><br>
+  Mines: <input id="mines" type="number" value="1000"><br>
   
   <script src="script.js"></script>
 </html>

@@ -2,8 +2,6 @@
     --tilesWidth: 30;
 }
 
-
-
 html {
     overflow-x: auto;
     width: 100%;
@@ -12,13 +10,27 @@ html {
     color: #CCC;
 }
 
+.headerContainer {
+    width: 100%;
+    position: fixed;
+    offset: 0 -1rem;
+    padding: 0;
+    margin: 0;
+    background-color: black;
+}
+
+.headerData {
+    padding: 0;
+    margin: 0;
+}
+
 .mine-row {
-    width: var(--tilesWidth);
-    min-width: 100%;
+    /*width: var(--tilesWidth);
+    min-width: 100%; */
     display: flex;
     flex-direction: row;
-    align-items: center;
-    justify-content: center;
+    align-items: left;
+    justify-content: left;
 }
 
 p, .tile {

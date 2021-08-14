@@ -2,7 +2,7 @@ let mineGrid;
 let gameHasEnded = false;
 let gridRows = 10;
 let gridCols = 10;
-let unflaggedMines = 10;
+let unflaggedMines = 1000;
 
 class Tile {
     constructor (data) { // Data contains x, y, and isMine. 
@@ -123,6 +123,33 @@ class MineArray {
         oncontextmenu="flagTile(${x},${y})">
         ${this.minesNear(x,y)   }</div>`
     }
+
+    isCovered(x, y) {
+        return (x >= 0 && 
+            y >= 0 && 
+            x < this.rows && 
+            y < this.cols && 
+            !this.tileData[x][y].uncovered
+        );
+    }
+
+    coveredNear(x, y) {
+        let xInt = parseInt(x);
+        let yInt = parseInt(y);
+        let nearByUncovered = 0;
+        if (this.isCovered(xInt+1, yInt+1)) nearByUncovered++;
+        if (this.isCovered(xInt+1, yInt  )) nearByUncovered++;
+        if (this.isCovered(xInt+1, yInt-1)) nearByUncovered++;
+
+        if (this.isCovered(xInt-1, yInt+1)) nearByUncovered++;
+        if (this.isCovered(xInt-1, yInt  )) nearByUncovered++;
+        if (this.isCovered(xInt-1, yInt-1)) nearByUncovered++;
+
+        if (this.isCovered(xInt  , yInt+1)) nearByUncovered++;
+        if (this.isCovered(xInt  , yInt-1)) nearByUncovered++;
+
+        return nearByUncovered;
+    }
 }
 
 
@@ -130,6 +157,7 @@ class MineArray {
 
 
 function generateGridFromInput() {// Takes the input data and creates a milefield. 
+    let start = Date.now()
     try {
     generateGrid(
         document.getElementById("cols").value,
@@ -140,6 +168,7 @@ function generateGridFromInput() {// Takes the input data and creates a milefiel
         console.log(e)
         alert(e.message);
     }
+    console.log(`Operation took ${Date.now() - start} ms.`)
 }
 
 function generateGrid(cols, rows, mines) { // Function that generates a 2D minesweeper board given rows, columns, and mines. 
@@ -154,16 +183,26 @@ function generateGrid(cols, rows, mines) { // Function that generates a 2D mines
         minesTotal: mines,
     })
 
-
-
     displayGrid(mineGrid);
+
+    let i = 0, j = 0;
+    while (mineGrid.minesNear(i, j) !== 0) {
+        i++;
+        if (i = mineGrid.rows) {
+            i = 0
+            j++
+        }
+        if (j = mineGrid.cols) {
+            window.alert("Notice: there are no 0 tiles on your board.")
+            return;
+        }
+    }
+    uncoverTile(i, j, false);
 }
 
 function displayGrid(matrix) {
     document.getElementById("array").innerHTML = "";
     let string = "";
-    //let vars = document.querySelector(':root')
-    //vars.style.setProperty("--tilesWidth", 30 * matrix.length)
     for (let i in matrix.tileData) {
         string += `<div id="row-${i}" class="mine-row">`
         for (let j in matrix.tileData[i]) {
@@ -175,6 +214,7 @@ function displayGrid(matrix) {
     [...document.querySelectorAll(".tile")].forEach( el => 
         el.addEventListener('contextmenu', e => e.preventDefault())
     );
+    document.getElementById("minesRemaining").innerText = mineGrid.minesLeft;
 }
 
 function uncoverTile(x, y, auto = false) { // Uncovers a tile.
@@ -228,40 +268,34 @@ function uncoverTile(x, y, auto = false) { // Uncovers a tile.
     return false;
 }
 
-function flagTile(x,y) { // Flags or unflags a tile. 
-    if (gameHasEnded) return false; // Game over.
+function flagTile(x,y, auto = false) { // Flags or unflags a tile. 
+    if (gameHasEnded) return true; // Game over.
+    if (x < 0 || y < 0 || x >= mineGrid.rows || y >= mineGrid.cols) return false;
 
     let tileData = mineGrid.tileData[x][y];
     if (tileData.uncovered) return false; // Can't flag an uncovered tile.
 
     let tileEl = document.getElementById(`tile-${x}-${y}`);
 
-    if (tileData.isFlagged) {
+    if (tileData.isFlagged && !auto) {
         tileEl.classList.remove("flagged");
         tileEl.innerHTML = mineGrid.minesNear(x,y);
         tileData.isFlagged = false;
+        mineGrid.minesLeft++;
     } else {
+        if (tileData.isFlagged) return;
         tileEl.classList.add("flagged");
         tileEl.innerHTML = "&#128681"; // 🚩 <-- Goal
         tileData.isFlagged = true;
+        mineGrid.minesLeft--;
     }
+    document.getElementById("minesRemaining").innerText = mineGrid.minesLeft;
     return false;
-}
-
-function getTileData(x, y) {
-    return mineGrid.tileData[x][y]; // Depreciated. 
-}
-
-
-
-function RandBetween(min, max, isInt = true) { // A function that creates a random integer between the min (inclusive) and max (exclusive). 
-    let number =  Math.random() * (max-min) + min;
-    if (isInt) return Math.floor(number); // isInt = should the number that is returned be an integer? 
-    return number;
 }
 
 function endGame() {
     gameHasEnded = true;
+    console.log()
     let element;
     for (i in mineGrid.tileData) {
         for (j in mineGrid.tileData[i]) {
@@ -272,4 +306,40 @@ function endGame() {
             element.innerHTML = "&#128163;"; // 💣 <-- Goal
         }
     }
+}
+
+
+function solve() {
+    let date = Date.now()
+    for (let x = 0; x < mineGrid.rows; x++) {
+        for (let y = 0; y < mineGrid.cols; y++) {
+            if (mineGrid.tileData[x][y].isFlagged || !mineGrid.tileData[x][y].uncovered) continue;
+            //console.log(`${x}, ${y}`)
+            if (mineGrid.isFullyFlagged(x, y)) {
+                uncoverTile(x+1, y+1, true);
+                uncoverTile(x+1, y  , true);
+                uncoverTile(x+1, y-1, true);
+                
+                uncoverTile(x-1, y+1, true);
+                uncoverTile(x-1, y  , true);
+                uncoverTile(x-1, y-1, true);
+                
+                uncoverTile(x, y+1, true);
+                uncoverTile(x, y-1, true);
+            }
+            if (mineGrid.coveredNear(x, y) == mineGrid.minesNear(x, y)) {
+                flagTile(x+1, y+1, true);
+                flagTile(x+1, y  , true);
+                flagTile(x+1, y-1, true);
+                
+                flagTile(x-1, y+1, true);
+                flagTile(x-1, y  , true);
+                flagTile(x-1, y-1, true);
+                
+                flagTile(x, y+1, true);
+                flagTile(x, y-1, true);
+            }
+        }
+    }
+    return `${Date.now() - date}ms`
 }
