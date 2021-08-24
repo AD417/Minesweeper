@@ -58,16 +58,10 @@ p, .tile {
     background-color: #000;
     color: #000;
 }
-.covered::selection {
-    color: #000;
-} 
 .covered:hover {
     background-color: #883333;
     color: #883333;
 }
-.covered:hover::selection {
-    color: #883333;
-} 
 
 
 .uncovered {

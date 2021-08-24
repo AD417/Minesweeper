@@ -3,6 +3,7 @@ let gameHasEnded = false;
 let gridRows = 10;
 let gridCols = 10;
 let unflaggedMines = 1000;
+let runningSolver;
 
 class Tile {
     constructor (data) { // Data contains x, y, and isMine. 
@@ -113,7 +114,7 @@ class MineArray {
             id="tile-${x}-${y}" 
             class="tile covered"
             onclick="endGame()"
-            oncontextmenu="flagTile(${x},${y})">X
+            oncontextmenu="flagTile(${x},${y})">
             </div>`
         }
         return `<div 
@@ -121,7 +122,7 @@ class MineArray {
         class="tile covered"
         onclick="uncoverTile(${x},${y})"
         oncontextmenu="flagTile(${x},${y})">
-        ${this.minesNear(x,y)   }</div>`
+        </div>`
     }
 
     isCovered(x, y) {
@@ -184,20 +185,22 @@ function generateGrid(cols, rows, mines) { // Function that generates a 2D mines
     })
 
     displayGrid(mineGrid);
-
+    console.clear();
     let i = 0, j = 0;
-    while (mineGrid.minesNear(i, j) !== 0) {
+    while (mineGrid.minesNear(j, i) !== 0 || mineGrid.isMine(j, i)) {
+        // console.log(`position (${i},${j}) was${mineGrid.isMine(j, i) ? "" : " not"} a mine and had ${mineGrid.minesNear(j, i)} mines nearby.`);
         i++;
-        if (i = mineGrid.rows) {
-            i = 0
-            j++
+        if (i == mineGrid.rows) {
+            i = 0;
+            j++;
         }
-        if (j = mineGrid.cols) {
-            window.alert("Notice: there are no 0 tiles on your board.")
-            return;
+        if (j == mineGrid.cols) {
+            window.alert("Notice: there are no 0 tiles on your board.");
+            break;
         }
     }
-    uncoverTile(i, j, false);
+    uncoverTile(j, i, false);
+    console.log(`chose tile (${i},${j})`);
 }
 
 function displayGrid(matrix) {
@@ -246,12 +249,13 @@ function uncoverTile(x, y, auto = false) { // Uncovers a tile.
     tileData.uncovered = true;
 
     
-    let tile = document.getElementById(`tile-${x}-${y}`).classList;
-    tile.add("uncovered");
-    tile.remove("covered");
+    let tile = document.getElementById(`tile-${x}-${y}`);
+    tile.classList.add("uncovered");
+    tile.classList.remove("covered");
+    tile.innerText = mineGrid.minesNear(x, y);
 
     if (mineGrid.minesNear(x, y) === 0) {
-        tile.add("no-mines");
+        tile.classList.add("no-mines");
 
         uncoverTile(x+1, y+1, true);
         uncoverTile(x+1, y  , true);
@@ -305,6 +309,14 @@ function endGame() {
             element.classList.remove("covered");
             element.innerHTML = "&#128163;"; // 💣 <-- Goal
         }
+    }
+}
+
+function toggleMonkeMode() {
+    if (document.getElementById("solverBox").value) {
+        runningSolver = setInterval(solve, 500);
+    } else {
+        clearInterval(runningSolver);
     }
 }
 
