@@ -2,8 +2,6 @@
     --tilesWidth: 30;
 }
 
-
-
 html {
     overflow-x: auto;
     width: 100%;
@@ -44,10 +42,16 @@ p, .tile {
     background-color: #CCC;
     color: #CCC;
 }
+.covered::selection {
+    color: #CCC;
+} 
 .covered:hover {
     background-color: #cc8888;
     color: #cc8888;
 }
+.covered:hover::selection {
+    color: #cc8888;
+} 
 
 .uncovered {
     background-color: white;
